@@ -46,6 +46,11 @@ def createInterface(devName='wg0', address='192.168.50.0/24', listen_port=None, 
     print(setWG(devName, listen_port=listen_port, private_key=privKeyPath, execFcn=execFcn))
     return pubKey.replace('\n','').replace('\r','')
 
+
+def getInterfacePubKey(devName='wg0', execFcn=execLocal):
+    pubKey, err = execFcn('wg show {} public-key'.format(devName))
+    return pubKey.replace('\n','').replace('\r','')
+
 def addPeer(devName='wg0', peer=None, endpoint=None, allowed_ips='0.0.0.0/0', persistent_keepalive=25, execFcn=execLocal):
     print(setWG(devName, peer=peer, allowed_ips=allowed_ips, endpoint=endpoint, persistent_keepalive=persistent_keepalive, execFcn=execFcn))
 
@@ -70,7 +75,8 @@ def createTunnel(execFcnA, execFcnB=execLocal):
     addPeer('wg3', pubKeyA, '94.16.116.218:51821', execFcn=execFcnB)
 
 
-createTunnel(lambda x: execRemote(x, 'root@94.16.116.218'))
+print(getInterfacePubKey('wg0', lambda x: execRemote(x, 'root@94.16.116.218')))
+#createTunnel(lambda x: execRemote(x, 'root@94.16.116.218'))
 
 #print(execLocal(addNetDev('wg1')))
 
