@@ -100,11 +100,15 @@ def installWireguard(execFcn=execLocal):
     execFcn('apt install -y wireguard')
     execFcn('modprobe wireguard')
 
+def portForward(devNameExtNode='wg0', wanName='ens3', externalPort=8080, tunIPextNode='192.168.91.1', internalPort=80, tunIPintNode='192.168.91.2', execFcn=execLocal):
+    execFcn('iptables -t nat -A POSTROUTING -o {} -p tcp --dport {} -d {} -j SNAT --to-source {}'.format(devNameExtNode, internalPort, tunIPintNode, tunIPextNode))
+    execFcn('iptables -t nat -A PREROUTING -i {} -p tcp --dport {} -j DNAT --to-destination {}:{}'.format(wanName, externalPort, tunIPintNode, internalPort))
+
 
 
 installWireguard(lambda x: execRemote(x, 'root@94.16.116.218'))
-
 connect2server(lambda x: execRemote(x, 'root@94.16.116.218'), 'wg3', localDevName='wg3')
+portForward('wg3', 'ens3', 22223, '192.168.91.1', 22, '192.168.91.2', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
 
 #print(getInterfacePubKey('wg0', lambda x: execRemote(x, 'root@94.16.116.218')))
 #createTunnel(lambda x: execRemote(x, 'root@94.16.116.218'))
