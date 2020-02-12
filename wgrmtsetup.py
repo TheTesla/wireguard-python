@@ -5,6 +5,7 @@ import subprocess
 import os.path
 
 def execRemote(cmd, target='root@localhost'):
+    print(cmd)
     if '!returnIP' == cmd:
         return target.split('@')[-1]
     p = subprocess.Popen(['ssh', '-t', target, cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -93,6 +94,15 @@ def createTunnel(execFcnA, execFcnB=execLocal):
     addPeer('wg3', pubKeyA, '94.16.116.218:51821', execFcn=execFcnB)
 
 
+def installWireguard(execFcn=execLocal):
+    execFcn('add-apt-repository -y ppa:wireguard/wireguard')
+    execFcn('apt update')
+    execFcn('apt install -y wireguard')
+    execFcn('modprobe wireguard')
+
+
+
+installWireguard(lambda x: execRemote(x, 'root@94.16.116.218'))
 
 connect2server(lambda x: execRemote(x, 'root@94.16.116.218'), 'wg3', localDevName='wg3')
 
