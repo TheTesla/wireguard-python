@@ -5,10 +5,16 @@ import subprocess
 import os.path
 
 def execRemote(cmd, target='root@localhost'):
+    if '!returnIP' == cmd:
+        return target.split('@')[-1]
     p = subprocess.Popen(['ssh', '-t', target, cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return p.communicate()
 
+
+
 def execLocal(cmd):
+    if '!returnIP' == cmd:
+        return '127.0.0.1'
     #print(cmd)
     p = subprocess.Popen(['bash', '-c', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return p.communicate()
@@ -51,10 +57,22 @@ def getInterfacePubKey(devName='wg0', execFcn=execLocal):
     pubKey, err = execFcn('wg show {} public-key'.format(devName))
     return pubKey.replace('\n','').replace('\r','')
 
+def getInterfacePort(devName='wg0', execFcn=execLocal):
+    pubKey, err = execFcn('wg show {} listen-port'.format(devName))
+    return pubKey.replace('\n','').replace('\r','')
+
 def addPeer(devName='wg0', peer=None, endpoint=None, allowed_ips='0.0.0.0/0', persistent_keepalive=25, execFcn=execLocal):
     print(setWG(devName, peer=peer, allowed_ips=allowed_ips, endpoint=endpoint, persistent_keepalive=persistent_keepalive, execFcn=execFcn))
 
 
+    # use this function if interface on server exists
+def connect2server(remoteExecFcn, remoteDevName='wg0', remoteAllowedIPs='192.168.91.0/24', localExecFcn=execLocal, localDevName='wg0', localIP='192.168.91.2/24'):
+    localPubKey = createInterface(localDevName, localIP, execFcn=localExecFcn)
+    remotePubKey = getInterfacePubKey(remoteDevName, remoteExecFcn)
+    remotePort = getInterfacePort(remoteDevName, remoteExecFcn)
+    remoteIP = remoteExecFcn('!returnIP')
+    addPeer(remoteDevName, localPubKey, allowed_ips=remoteAllowedIPs, execFcn=remoteExecFcn)
+    addPeer(localDevName, remotePubKey, '{}:{}'.format(remoteIP, remotePort), execFcn=localExecFcn)
 
 
 
@@ -75,7 +93,10 @@ def createTunnel(execFcnA, execFcnB=execLocal):
     addPeer('wg3', pubKeyA, '94.16.116.218:51821', execFcn=execFcnB)
 
 
-print(getInterfacePubKey('wg0', lambda x: execRemote(x, 'root@94.16.116.218')))
+
+connect2server(lambda x: execRemote(x, 'root@94.16.116.218'), 'wg3', localDevName='wg3')
+
+#print(getInterfacePubKey('wg0', lambda x: execRemote(x, 'root@94.16.116.218')))
 #createTunnel(lambda x: execRemote(x, 'root@94.16.116.218'))
 
 #print(execLocal(addNetDev('wg1')))
