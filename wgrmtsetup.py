@@ -100,10 +100,27 @@ def installWireguard(execFcn=execLocal):
     execFcn('apt install -y wireguard')
     execFcn('modprobe wireguard')
 
+
+def getWANifaceName(execFcn=execLocal):
+    devName, err = execFcn("route -n | grep '^0.0.0.0' | grep -o '[^ ]*$'")
+    return devName.replace('\n','').replace('\r','')
+
+def getIfaceIPs(devName='wg0', execFcn=execLocal):
+    ips, err = execFcn("ip addr show {} | grep 'inet' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'".format(devName))
+    return ips.replace('\r','').split('\n')[:-1]
+
+def getIPsPerIface(execFcn=execLocal):
+    ips, err = execFcn('ip a')
+    return parseIPa(ips.replace('\r','').split('\n')[:-1])
+
+
+
 def portForward(devNameExtNode='wg0', wanName='ens3', externalPort=8080, tunIPextNode='192.168.91.1', internalPort=80, tunIPintNode='192.168.91.2', execFcn=execLocal):
     execFcn('iptables -t nat -A POSTROUTING -o {} -p tcp --dport {} -d {} -j SNAT --to-source {}'.format(devNameExtNode, internalPort, tunIPintNode, tunIPextNode))
     execFcn('iptables -t nat -A PREROUTING -i {} -p tcp --dport {} -j DNAT --to-destination {}:{}'.format(wanName, externalPort, tunIPintNode, internalPort))
 
+def parseIPa(x):
+    return [{e.split(': ')[0]: [f.split(' ')[0] for f in e.split(': ')[-1].split('inet ')[1:]]} for e in re.split('(^|\n)[0-9*]: ', x) if ':' in e]
 
 
 installWireguard(lambda x: execRemote(x, 'root@94.16.116.218'))
