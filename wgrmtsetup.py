@@ -16,7 +16,7 @@ def execRemote(cmd, target='root@localhost'):
 def execLocal(cmd):
     if '!returnIP' == cmd:
         return '127.0.0.1'
-    #print(cmd)
+    print(cmd)
     p = subprocess.Popen(['bash', '-c', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return p.communicate()
 
@@ -30,9 +30,10 @@ def upLink(devName='wg0', execFcn=execLocal):
     return execFcn('ip link set up dev {}'.format(devName))
 
 def kwFormat(**kwargs):
-    if kwargs.values()[0] is None:
+    if list(kwargs.values())[0] is None:
         return ''
-    return '{} {}'.format(kwargs.keys()[0].replace('_','-'), kwargs.values()[0])
+    return '{} {}'.format(list(kwargs.keys())[0].replace('_','-'),
+            list(kwargs.values())[0])
 
 def setWG(devName='wg0', listen_port=None, private_key=None, peer=None, allowed_ips=None, endpoint=None, persistent_keepalive=None, execFcn=execLocal):
     return execFcn('wg set {} {}'.format(devName, ' '.join([kwFormat(listen_port=listen_port), kwFormat(private_key=private_key), kwFormat(peer=peer), kwFormat(allowed_ips=allowed_ips), kwFormat(endpoint=endpoint), kwFormat(persistent_keepalive=persistent_keepalive)])))
@@ -123,25 +124,38 @@ def parseIPa(x):
     return [{e.split(': ')[0]: [f.split(' ')[0] for f in e.split(': ')[-1].split('inet ')[1:]]} for e in re.split('(^|\n)[0-9*]: ', x) if ':' in e]
 
 
-installWireguard(lambda x: execRemote(x, 'root@94.16.116.218'))
-connect2server(lambda x: execRemote(x, 'root@94.16.116.218'), 'wg3', localDevName='wg3')
-portForward('wg3', 'ens3', 22223, '192.168.91.1', 22, '192.168.91.2', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#installWireguard(lambda x: execRemote(x, 'root@94.16.116.218'))
+#installWireguard(lambda x: execRemote(x, 'root@192.168.0.42'))
+#createInterface('wg4',  '192.168.5.1/24', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#connect2server(lambda x: execRemote(x, 'root@94.16.116.218'), 'wg4', localDevName='wg4', localIP='192.168.5.2/24', remoteAllowedIPs='192.168.5.0/24', localExecFcn=lambda x: execRemote(x, 'root@192.168.0.42'))
+#portForward('wg4', 'ens3', 22224, '192.168.5.1', 22, '192.168.5.2', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#portForward('wg4', 'ens3', 8081, '192.168.5.1', 80, '192.168.5.2', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#
+#
+#createInterface('wg5',  '192.168.4.1/24', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#connect2server(lambda x: execRemote(x, 'root@94.16.116.218'), 'wg5', localDevName='wg5', localIP='192.168.4.2/24', remoteAllowedIPs='192.168.4.0/24', localExecFcn=lambda x: execRemote(x, 'root@192.168.0.42'))
+#portForward('wg5', 'ens3', 22226, '192.168.4.1', 22, '192.168.0.43', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#portForward('wg5', 'ens3', 8080, '192.168.4.1', 80, '192.168.0.43', execFcn=lambda x: execRemote(x, 'root@94.16.116.218'))
+#
+
+
+
 
 #print(getInterfacePubKey('wg0', lambda x: execRemote(x, 'root@94.16.116.218')))
 #createTunnel(lambda x: execRemote(x, 'root@94.16.116.218'))
 
-#print(execLocal(addNetDev('wg1')))
+print(addNetDev('wg0'))
 
-#print(execLocal(addAddress('wg0', '192.168.50.2/24')))
-
-
-#print(execLocal(setWG('wg0', listen_port=33720, private_key='/home/stefan/privkey2', peer='VVNn2H4i1QGNYqPiXTIXDhtKkK5a+zReWFHqqojYbB8=', allowed_ips='0.0.0.0/0', endpoint='94.16.116.218:51820', persistent_keepalive=25)))
-
-#print(execLocal(upLink('wg0')))
-
-#myTarget = 'root@94.16.116.218'
+print(addAddress('wg0', '192.168.50.2/24'))
 
 
+print(setWG('wg0', listen_port=33720, private_key='/home/stefan/privkey2', peer='VVNn2H4i1QGNYqPiXTIXDhtKkK5a+zReWFHqqojYbB8=', allowed_ips='0.0.0.0/0', endpoint='94.16.116.218:51820', persistent_keepalive=25))
+
+print(upLink('wg0'))
+
+myTarget = 'root@94.16.116.218'
 
 
-#print(remoteAddNetDev(target='root@94.16.116.218'))
+
+
+print(remoteAddNetDev(target='root@94.16.116.218'))
